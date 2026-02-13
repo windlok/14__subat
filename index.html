@@ -447,9 +447,119 @@
       background: var(--blush);
       border-radius: 3px;
     }
+
+    /* ─── Music toggle button ─── */
+    .music-btn {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 300;
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      border: none;
+      background: var(--pink);
+      color: #fff;
+      font-size: 1.4rem;
+      cursor: pointer;
+      box-shadow: 0 4px 16px rgba(232, 67, 147, 0.45);
+      transition: transform 0.3s, background 0.3s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .music-btn:hover { transform: scale(1.12); }
+    .music-btn.playing { animation: musicPulse 1.5s ease-in-out infinite; }
+    @keyframes musicPulse {
+      0%, 100% { box-shadow: 0 4px 16px rgba(232, 67, 147, 0.45); }
+      50% { box-shadow: 0 4px 28px rgba(232, 67, 147, 0.75); }
+    }
+
+    /* ─── Birlikte geçen süre sayacı ─── */
+    .timer-container {
+      position: fixed;
+      top: 18px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 300;
+      background: rgba(255,255,255,0.2);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255,255,255,0.35);
+      border-radius: 16px;
+      padding: 10px 24px;
+      text-align: center;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    }
+    .timer-label {
+      font-family: 'Dancing Script', cursive;
+      font-size: 1rem;
+      color: var(--pink);
+      margin-bottom: 4px;
+    }
+    .timer-value {
+      font-family: 'Quicksand', sans-serif;
+      font-weight: 600;
+      font-size: 0.95rem;
+      color: var(--dark);
+      letter-spacing: 0.5px;
+    }
+    .timer-value span {
+      display: inline-block;
+      background: rgba(232,67,147,0.12);
+      padding: 2px 8px;
+      border-radius: 8px;
+      margin: 0 2px;
+      min-width: 38px;
+      text-align: center;
+    }
+
+    /* ─── Cursor hearts ─── */
+    .cursor-heart {
+      position: fixed;
+      pointer-events: none;
+      z-index: 9999;
+      font-size: 1rem;
+      animation: cursorHeartFloat 1.5s ease-out forwards;
+    }
+    @keyframes cursorHeartFloat {
+      0%   { transform: translate(0, 0) scale(1) rotate(0deg); opacity: 1; }
+      100% { transform: translate(var(--dx), -80px) scale(0.3) rotate(var(--rot)); opacity: 0; }
+    }
+
+    /* ─── Typewriter cursor blink ─── */
+    .typewriter-cursor {
+      display: inline-block;
+      width: 2px;
+      height: 1.1em;
+      background: var(--pink);
+      margin-left: 2px;
+      vertical-align: text-bottom;
+      animation: blink 0.7s step-end infinite;
+    }
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50%      { opacity: 0; }
+    }
+
+    @media (max-width: 480px) {
+      .timer-container { padding: 8px 14px; border-radius: 12px; }
+      .timer-label { font-size: 0.85rem; }
+      .timer-value { font-size: 0.8rem; }
+      .timer-value span { padding: 2px 5px; min-width: 30px; }
+      .music-btn { width: 44px; height: 44px; font-size: 1.2rem; bottom: 18px; right: 18px; }
+    }
   </style>
 </head>
 <body>
+
+  <!-- Birlikte geçen süre -->
+  <div class="timer-container">
+    <div class="timer-label">💕 Birlikte geçen süremiz</div>
+    <div class="timer-value" id="timerValue">Yükleniyor...</div>
+  </div>
+
+  <!-- Music toggle -->
+  <button class="music-btn" id="musicBtn" title="Müzik Aç/Kapat">🔇</button>
 
   <!-- Background floating hearts -->
   <div class="bg-hearts" id="bgHearts"></div>
@@ -670,6 +780,144 @@ Sonsuza dek seninle…
         }
       }
     }, { passive: true });
+
+    /* ─── Auto Slider (5 saniyede bir) ─── */
+    let autoSlideInterval = setInterval(() => {
+      goToSlide(currentSlide >= slides.length - 1 ? 0 : currentSlide + 1);
+    }, 5000);
+
+    // Kullanıcı müdahale edince zamanlayıcıyı sıfırla
+    function resetAutoSlide() {
+      clearInterval(autoSlideInterval);
+      autoSlideInterval = setInterval(() => {
+        goToSlide(currentSlide >= slides.length - 1 ? 0 : currentSlide + 1);
+      }, 5000);
+    }
+    document.getElementById('prevBtn').addEventListener('click', resetAutoSlide);
+    document.getElementById('nextBtn').addEventListener('click', resetAutoSlide);
+    dotsContainer.addEventListener('click', resetAutoSlide);
+
+    /* ─── Birlikte Geçen Süre Sayacı ─── */
+    (function startTimer() {
+      // 11 Ekim 2025 saat 12:40 (Türkiye saati UTC+3)
+      const startDate = new Date('2025-10-11T12:40:00+03:00');
+      const timerEl = document.getElementById('timerValue');
+
+      function update() {
+        const now = new Date();
+        let diff = Math.floor((now - startDate) / 1000);
+        if (diff < 0) diff = 0;
+
+        const days = Math.floor(diff / 86400);
+        const hours = Math.floor((diff % 86400) / 3600);
+        const minutes = Math.floor((diff % 3600) / 60);
+        const seconds = diff % 60;
+
+        const months = Math.floor(days / 30);
+        const remainDays = days % 30;
+
+        timerEl.innerHTML =
+          `<span>${months} ay</span>` +
+          `<span>${remainDays} gün</span>` +
+          `<span>${hours} saat</span>` +
+          `<span>${minutes} dk</span>` +
+          `<span>${seconds} sn</span>`;
+      }
+      update();
+      setInterval(update, 1000);
+    })();
+
+    /* ─── Müzik Çalar (Playlist) ─── */
+    (function initMusic() {
+      const btn = document.getElementById('musicBtn');
+      const playlist = ['Bana Ellerini Ver.mp3', 'Tencere Kapak.mp3'];
+      let currentTrack = 0;
+      let playing = false;
+
+      const audio = new Audio(playlist[currentTrack]);
+
+      // Şarkı bitince sıradakine geç
+      audio.addEventListener('ended', () => {
+        currentTrack = (currentTrack + 1) % playlist.length;
+        audio.src = playlist[currentTrack];
+        audio.play().catch(() => {});
+      });
+
+      btn.addEventListener('click', () => {
+        if (playing) {
+          audio.pause();
+          btn.textContent = '🔇';
+          btn.classList.remove('playing');
+        } else {
+          audio.play().catch(() => {});
+          btn.textContent = '🎵';
+          btn.classList.add('playing');
+        }
+        playing = !playing;
+      });
+    })();
+
+    /* ─── Typewriter Efekti ─── */
+    (function initTypewriter() {
+      const messageEl = document.querySelector('.letter-card .message');
+      const fullText = messageEl.textContent;
+      let hasPlayed = false;
+
+      // Mektup açıldığında çalışsın
+      const observer = new MutationObserver(() => {
+        if (letterFull.classList.contains('visible') && !hasPlayed) {
+          hasPlayed = true;
+          typeWrite(messageEl, fullText);
+        }
+      });
+      observer.observe(letterFull, { attributes: true, attributeFilter: ['class'] });
+
+      function typeWrite(el, text) {
+        el.textContent = '';
+        const cursor = document.createElement('span');
+        cursor.className = 'typewriter-cursor';
+        el.appendChild(cursor);
+
+        let i = 0;
+        const speed = 30; // ms per character
+
+        function type() {
+          if (i < text.length) {
+            el.insertBefore(document.createTextNode(text.charAt(i)), cursor);
+            i++;
+            setTimeout(type, text.charAt(i - 1) === '\n' ? 200 : speed);
+          } else {
+            // Bir süre sonra imleci kaldır
+            setTimeout(() => cursor.remove(), 2000);
+          }
+        }
+        type();
+      }
+    })();
+
+    /* ─── İnteraktif Kalpler (İmleç Takibi) ─── */
+    (function initCursorHearts() {
+      const heartSymbols = ['❤', '💗', '💖', '💕', '♥', '🩷', '💘'];
+      let lastTime = 0;
+
+      document.addEventListener('mousemove', (e) => {
+        const now = Date.now();
+        if (now - lastTime < 120) return; // throttle
+        lastTime = now;
+
+        const heart = document.createElement('span');
+        heart.className = 'cursor-heart';
+        heart.textContent = heartSymbols[Math.floor(Math.random() * heartSymbols.length)];
+        heart.style.left = e.clientX + 'px';
+        heart.style.top = e.clientY + 'px';
+        heart.style.fontSize = (0.7 + Math.random() * 0.8) + 'rem';
+        heart.style.setProperty('--dx', (Math.random() * 60 - 30) + 'px');
+        heart.style.setProperty('--rot', (Math.random() * 90 - 45) + 'deg');
+        document.body.appendChild(heart);
+
+        setTimeout(() => heart.remove(), 1500);
+      });
+    })();
   </script>
 </body>
 </html>
