@@ -668,6 +668,9 @@ Sonsuza dek seninle…
       isOpen = true;
       scene.classList.add('open');
 
+      // Müzik zarf açılınca başlasın
+      startMusic();
+
       // Show full letter after envelope animation
       setTimeout(() => {
         letterFull.classList.add('visible');
@@ -678,15 +681,22 @@ Sonsuza dek seninle…
       setTimeout(launchFallingHearts, 800);
     });
 
-    /* ─── Close button ─── */
-    document.getElementById('closeBtn').addEventListener('click', () => {
+    /* ─── Close / Reset ─── */
+    function closeLetter() {
       letterFull.classList.remove('visible');
-    });
+      // Zarfı eski haline döndür, tekrar tıklanabilir yap
+      setTimeout(() => {
+        scene.classList.remove('open');
+        isOpen = false;
+      }, 500);
+    }
+
+    document.getElementById('closeBtn').addEventListener('click', closeLetter);
 
     // Close on overlay click (outside card)
     letterFull.addEventListener('click', (e) => {
       if (e.target === letterFull) {
-        letterFull.classList.remove('visible');
+        closeLetter();
       }
     });
 
@@ -828,34 +838,38 @@ Sonsuza dek seninle…
     })();
 
     /* ─── Müzik Çalar (Playlist) ─── */
-    (function initMusic() {
-      const btn = document.getElementById('musicBtn');
-      const playlist = ['Bana Ellerini Ver.mp3', 'Tencere Kapak.mp3'];
-      let currentTrack = 0;
-      let playing = false;
+    const musicBtn = document.getElementById('musicBtn');
+    const musicPlaylist = ['Bana Ellerini Ver.mp3', 'Tencere Kapak.mp3'];
+    let musicCurrentTrack = 0;
+    let musicPlaying = false;
+    const musicAudio = new Audio(musicPlaylist[musicCurrentTrack]);
 
-      const audio = new Audio(playlist[currentTrack]);
+    // Şarkı bitince sıradakine geç
+    musicAudio.addEventListener('ended', () => {
+      musicCurrentTrack = (musicCurrentTrack + 1) % musicPlaylist.length;
+      musicAudio.src = musicPlaylist[musicCurrentTrack];
+      musicAudio.play().catch(() => {});
+    });
 
-      // Şarkı bitince sıradakine geç
-      audio.addEventListener('ended', () => {
-        currentTrack = (currentTrack + 1) % playlist.length;
-        audio.src = playlist[currentTrack];
-        audio.play().catch(() => {});
-      });
+    function startMusic() {
+      if (!musicPlaying) {
+        musicAudio.play().catch(() => {});
+        musicBtn.textContent = '🎵';
+        musicBtn.classList.add('playing');
+        musicPlaying = true;
+      }
+    }
 
-      btn.addEventListener('click', () => {
-        if (playing) {
-          audio.pause();
-          btn.textContent = '🔇';
-          btn.classList.remove('playing');
-        } else {
-          audio.play().catch(() => {});
-          btn.textContent = '🎵';
-          btn.classList.add('playing');
-        }
-        playing = !playing;
-      });
-    })();
+    musicBtn.addEventListener('click', () => {
+      if (musicPlaying) {
+        musicAudio.pause();
+        musicBtn.textContent = '🔇';
+        musicBtn.classList.remove('playing');
+        musicPlaying = false;
+      } else {
+        startMusic();
+      }
+    });
 
     /* ─── Typewriter Efekti ─── */
     (function initTypewriter() {
