@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sevgililer Günü 💌</title>
+  <style>
+    /* ─── Reset & Base ─── */
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    @import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@500;700&family=Quicksand:wght@400;600&display=swap');
+
+    :root {
+      --pink:    #e84393;
+      --rose:    #fd79a8;
+      --blush:   #fab1a0;
+      --cream:   #ffeaa7;
+      --dark:    #2d3436;
+      --white:   #fff;
+      --envelope:#d63031;
+      --envelope-inner: #fdcb6e;
+      --letter:  #fdf6ec;
+    }
+
+    html { font-size: 16px; }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Quicksand', sans-serif;
+      background: linear-gradient(135deg, #fce4ec 0%, #f8bbd0 50%, #f48fb1 100%);
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* ─── Background floating hearts ─── */
+    .bg-hearts {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+    .bg-hearts .heart {
+      position: absolute;
+      bottom: -60px;
+      font-size: 1.4rem;
+      opacity: 0.15;
+      animation: floatUp linear infinite;
+    }
+    @keyframes floatUp {
+      0%   { transform: translateY(0) rotate(0deg); opacity: 0.15; }
+      50%  { opacity: 0.25; }
+      100% { transform: translateY(-110vh) rotate(360deg); opacity: 0; }
+    }
+
+    /* ─── Scene wrapper ─── */
+    .scene {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      perspective: 800px;
+    }
+
+    /* ─── Hint text ─── */
+    .hint {
+      position: absolute;
+      bottom: -50px;
+      font-size: 0.95rem;
+      color: var(--dark);
+      opacity: 0.7;
+      animation: pulse 2s ease-in-out infinite;
+      transition: opacity 0.4s;
+    }
+    .scene.open .hint { opacity: 0; pointer-events: none; }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50%      { transform: scale(1.08); }
+    }
+
+    /* ─── Envelope ─── */
+    .envelope-wrapper {
+      position: relative;
+      width: min(300px, 80vw);
+      aspect-ratio: 3 / 2;
+      cursor: pointer;
+      transition: transform 0.3s;
+    }
+    .envelope-wrapper:hover { transform: scale(1.04); }
+    .scene.open .envelope-wrapper { cursor: default; }
+    .scene.open .envelope-wrapper:hover { transform: scale(1); }
+
+    .envelope {
+      position: relative;
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Back panel */
+    .envelope .back {
+      position: absolute;
+      inset: 0;
+      background: var(--envelope);
+      border-radius: 8px;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.18);
+    }
+
+    /* Front bottom panel */
+    .envelope .front {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 60%;
+      background: #c0392b;
+      border-radius: 0 0 8px 8px;
+      z-index: 3;
+    }
+    /* Left fold */
+    .envelope .fold-left {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 50%;
+      height: 60%;
+      background: #b71c1c;
+      clip-path: polygon(0 0, 100% 50%, 0 100%);
+      z-index: 4;
+    }
+    /* Right fold */
+    .envelope .fold-right {
+      position: absolute;
+      bottom: 0;
+      right: 0;
+      width: 50%;
+      height: 60%;
+      background: #b71c1c;
+      clip-path: polygon(100% 0, 0 50%, 100% 100%);
+      z-index: 4;
+    }
+
+    /* Heart seal */
+    .envelope .seal {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 6;
+      font-size: 2rem;
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.25));
+      transition: opacity 0.4s 0.1s, transform 0.4s 0.1s;
+    }
+    .scene.open .envelope .seal {
+      opacity: 0;
+      transform: translate(-50%, -50%) scale(1.6);
+    }
+
+    /* Flap (triangle lid) */
+    .envelope .flap {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 50%;
+      background: #e74c3c;
+      clip-path: polygon(0 0, 100% 0, 50% 100%);
+      z-index: 5;
+      transform-origin: top center;
+      transition: transform 0.6s ease-in-out;
+    }
+    .scene.open .envelope .flap {
+      transform: rotateX(180deg);
+      z-index: 1;
+    }
+
+    /* ─── Letter card ─── */
+    .letter {
+      position: absolute;
+      top: 10%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 85%;
+      background: var(--letter);
+      border-radius: 8px;
+      z-index: 2;
+      padding: 24px 20px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+      transition: transform 0.7s cubic-bezier(.23,1.02,.47,1) 0.25s,
+                  opacity 0.5s ease 0.25s;
+      opacity: 0;
+      transform: translateX(-50%) translateY(0);
+      max-height: 0;
+      overflow: hidden;
+    }
+    .scene.open .letter {
+      opacity: 1;
+      transform: translateX(-50%) translateY(-220px);
+      max-height: 2000px;
+    }
+
+    /* ─── Full letter overlay (slides in after envelope opens) ─── */
+    .letter-full {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0,0,0,0.45);
+      backdrop-filter: blur(6px);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.5s ease;
+      padding: 20px;
+    }
+    .letter-full.visible {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .letter-card {
+      background: var(--letter);
+      border-radius: 16px;
+      width: 100%;
+      max-width: 560px;
+      max-height: 90vh;
+      overflow-y: auto;
+      padding: 40px 32px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      transform: translateY(80px) scale(0.92);
+      transition: transform 0.6s cubic-bezier(.23,1.02,.47,1);
+      position: relative;
+    }
+    .letter-full.visible .letter-card {
+      transform: translateY(0) scale(1);
+    }
+
+    .letter-card .close-btn {
+      position: absolute;
+      top: 14px;
+      right: 18px;
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      cursor: pointer;
+      color: var(--dark);
+      opacity: 0.5;
+      transition: opacity 0.2s;
+    }
+    .letter-card .close-btn:hover { opacity: 1; }
+
+    .letter-card h1 {
+      font-family: 'Dancing Script', cursive;
+      font-size: 2rem;
+      color: var(--pink);
+      text-align: center;
+      margin-bottom: 8px;
+      line-height: 1.3;
+    }
+
+    .letter-card .divider {
+      width: 60px;
+      height: 3px;
+      background: var(--rose);
+      margin: 12px auto 20px;
+      border-radius: 2px;
+    }
+
+    .letter-card .message {
+      font-size: 1.05rem;
+      line-height: 1.8;
+      color: var(--dark);
+      text-align: center;
+      margin-bottom: 28px;
+      white-space: pre-line;
+    }
+
+    .letter-card .photos-title {
+      font-family: 'Dancing Script', cursive;
+      font-size: 1.4rem;
+      color: var(--pink);
+      text-align: center;
+      margin-bottom: 16px;
+    }
+
+    /* ─── Photo slider ─── */
+    .slider-wrapper {
+      position: relative;
+      width: 100%;
+      overflow: hidden;
+      border-radius: 12px;
+      margin-bottom: 12px;
+    }
+
+    .slider-track {
+      display: flex;
+      transition: transform 0.5s ease;
+    }
+
+    .slider-track .slide {
+      min-width: 100%;
+      aspect-ratio: 4 / 3;
+      background: #f8bbd0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.9rem;
+      color: #636e72;
+      position: relative;
+      overflow: hidden;
+    }
+    .slider-track .slide img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      object-position: center center;
+      display: block;
+    }
+    .slide .placeholder-icon {
+      font-size: 3rem;
+      margin-bottom: 8px;
+    }
+    .slide .placeholder-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .slider-btn {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      background: rgba(255,255,255,0.85);
+      border: none;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      font-size: 1.2rem;
+      cursor: pointer;
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+      transition: background 0.2s;
+    }
+    .slider-btn:hover { background: #fff; }
+    .slider-btn.prev { left: 10px; }
+    .slider-btn.next { right: 10px; }
+
+    .slider-dots {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .slider-dots .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--blush);
+      border: none;
+      cursor: pointer;
+      transition: background 0.3s, transform 0.3s;
+    }
+    .slider-dots .dot.active {
+      background: var(--pink);
+      transform: scale(1.3);
+    }
+
+    /* ─── Photo grid (alternative) ─── */
+    .photo-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .photo-grid .grid-item {
+      aspect-ratio: 1;
+      background: #dfe6e9;
+      border-radius: 10px;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #636e72;
+      font-size: 0.8rem;
+      transition: transform 0.3s;
+    }
+    .photo-grid .grid-item:hover { transform: scale(1.05); }
+    .photo-grid .grid-item img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    /* ─── Confetti & Hearts rain ─── */
+    .confetti-container {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 200;
+      overflow: hidden;
+    }
+    .confetti-piece {
+      position: absolute;
+      top: -20px;
+      width: 10px;
+      height: 10px;
+      border-radius: 2px;
+      animation: confettiFall linear forwards;
+    }
+    @keyframes confettiFall {
+      0%   { transform: translateY(0) rotate(0deg); opacity: 1; }
+      100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+    }
+
+    .falling-heart {
+      position: absolute;
+      top: -30px;
+      font-size: 1.2rem;
+      animation: heartFall linear forwards;
+      opacity: 0.7;
+    }
+    @keyframes heartFall {
+      0%   { transform: translateY(0) rotate(0deg) scale(1); opacity: 0.8; }
+      50%  { opacity: 0.6; }
+      100% { transform: translateY(110vh) rotate(45deg) scale(0.6); opacity: 0; }
+    }
+
+    /* ─── Responsive ─── */
+    @media (max-width: 480px) {
+      .letter-card { padding: 28px 18px; }
+      .letter-card h1 { font-size: 1.6rem; }
+      .letter-card .message { font-size: 0.95rem; }
+    }
+
+    /* Scrollbar styling for letter card */
+    .letter-card::-webkit-scrollbar { width: 6px; }
+    .letter-card::-webkit-scrollbar-track { background: transparent; }
+    .letter-card::-webkit-scrollbar-thumb {
+      background: var(--blush);
+      border-radius: 3px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Background floating hearts -->
+  <div class="bg-hearts" id="bgHearts"></div>
+
+  <!-- Main scene -->
+  <div class="scene" id="scene">
+    <div class="envelope-wrapper" id="envelopeWrapper">
+      <div class="envelope">
+        <div class="back"></div>
+        <div class="letter" id="miniLetter">
+          <p style="font-family:'Dancing Script',cursive;color:var(--pink);text-align:center;font-size:1.1rem;">
+            Sana özel bir mesajım var...
+          </p>
+        </div>
+        <div class="front"></div>
+        <div class="fold-left"></div>
+        <div class="fold-right"></div>
+        <div class="seal">❤️</div>
+        <div class="flap"></div>
+      </div>
+    </div>
+    <p class="hint">Zarfa tıkla 💌</p>
+  </div>
+
+  <!-- Full letter overlay -->
+  <div class="letter-full" id="letterFull">
+    <div class="letter-card">
+      <button class="close-btn" id="closeBtn" aria-label="Kapat">&times;</button>
+
+      <h1>Sevgililer Günün Kutlu Olsun Sevgilim 💕</h1>
+      <div class="divider"></div>
+
+      <p class="message">
+Seni tanıdığım günden beri hayatım bambaşka bir anlam kazandı.
+Sen benim en güzel tesadüfüm, en büyük şansım
+ve her sabah uyanmak için en güzel sebebimsin.
+
+Seninle geçen her an, kalbimde sonsuza dek
+kalacak bir hatıra bırakıyor.
+Gülüşün güneşim, bakışların huzurum,
+varlığın en büyük hediyem.
+
+Bu özel günde sana söylemek istediğim tek şey:
+Seni dünden çok, yarından az seviyorum. 💗
+
+Sonsuza dek seninle…
+      </p>
+
+      <p class="photos-title">📸 Anılarımız</p>
+
+      <!-- Slider -->
+      <div class="slider-wrapper">
+        <button class="slider-btn prev" id="prevBtn">&#8249;</button>
+        <div class="slider-track" id="sliderTrack">
+          <div class="slide">
+            <img src="resim1.jpeg" alt="">
+          </div>
+          <div class="slide">
+            <img src="resim2.jpeg" alt="">
+          </div>
+          <div class="slide">
+            <img src="resim3.jpeg" alt="">
+          </div>
+          <div class="slide">
+            <img src="resim4.jpeg" alt="">
+          </div>
+          <div class="slide">
+            <img src="resim5.jpeg" alt="">
+          </div>
+        </div>
+        <button class="slider-btn next" id="nextBtn">&#8250;</button>
+      </div>
+      <div class="slider-dots" id="sliderDots"></div>
+
+    </div>
+  </div>
+
+  <!-- Confetti container -->
+  <div class="confetti-container" id="confettiContainer"></div>
+
+  <script>
+    /* ─── Background floating hearts ─── */
+    (function initBgHearts() {
+      const container = document.getElementById('bgHearts');
+      const hearts = ['❤', '♥', '💕', '💗', '💖', '🤍', '🩵', '🩶', '💙', '🤍'];
+      for (let i = 0; i < 20; i++) {
+        const span = document.createElement('span');
+        span.classList.add('heart');
+        span.textContent = hearts[Math.floor(Math.random() * hearts.length)];
+        span.style.left = Math.random() * 100 + '%';
+        span.style.fontSize = (0.8 + Math.random() * 1.4) + 'rem';
+        span.style.animationDuration = (6 + Math.random() * 10) + 's';
+        span.style.animationDelay = (Math.random() * 12) + 's';
+        container.appendChild(span);
+      }
+    })();
+
+    /* ─── Envelope click ─── */
+    const scene = document.getElementById('scene');
+    const envelopeWrapper = document.getElementById('envelopeWrapper');
+    const letterFull = document.getElementById('letterFull');
+    let isOpen = false;
+
+    envelopeWrapper.addEventListener('click', () => {
+      if (isOpen) return;
+      isOpen = true;
+      scene.classList.add('open');
+
+      // Show full letter after envelope animation
+      setTimeout(() => {
+        letterFull.classList.add('visible');
+      }, 900);
+
+      // Launch effects
+      setTimeout(launchConfetti, 600);
+      setTimeout(launchFallingHearts, 800);
+    });
+
+    /* ─── Close button ─── */
+    document.getElementById('closeBtn').addEventListener('click', () => {
+      letterFull.classList.remove('visible');
+    });
+
+    // Close on overlay click (outside card)
+    letterFull.addEventListener('click', (e) => {
+      if (e.target === letterFull) {
+        letterFull.classList.remove('visible');
+      }
+    });
+
+    /* ─── Confetti ─── */
+    function launchConfetti() {
+      const container = document.getElementById('confettiContainer');
+      const colors = ['#e84393', '#fd79a8', '#fab1a0', '#fdcb6e', '#ff6b6b', '#ff9ff3', '#fff'];
+      for (let i = 0; i < 80; i++) {
+        const piece = document.createElement('div');
+        piece.classList.add('confetti-piece');
+        piece.style.left = Math.random() * 100 + '%';
+        piece.style.background = colors[Math.floor(Math.random() * colors.length)];
+        piece.style.width = (6 + Math.random() * 8) + 'px';
+        piece.style.height = (6 + Math.random() * 8) + 'px';
+        piece.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+        piece.style.animationDuration = (2 + Math.random() * 3) + 's';
+        piece.style.animationDelay = (Math.random() * 1.5) + 's';
+        container.appendChild(piece);
+        // Clean up
+        setTimeout(() => piece.remove(), 6000);
+      }
+    }
+
+    /* ─── Falling hearts ─── */
+    function launchFallingHearts() {
+      const container = document.getElementById('confettiContainer');
+      const heartSymbols = ['❤', '💗', '💖', '💕', '♥', '🤍', '🩵', '💙', '🩶', '🤍'];
+      for (let i = 0; i < 30; i++) {
+        const heart = document.createElement('span');
+        heart.classList.add('falling-heart');
+        heart.textContent = heartSymbols[Math.floor(Math.random() * heartSymbols.length)];
+        heart.style.left = Math.random() * 100 + '%';
+        heart.style.fontSize = (0.9 + Math.random() * 1.5) + 'rem';
+        heart.style.animationDuration = (3 + Math.random() * 4) + 's';
+        heart.style.animationDelay = (Math.random() * 3) + 's';
+        container.appendChild(heart);
+        setTimeout(() => heart.remove(), 8000);
+      }
+    }
+
+    /* ─── Photo Slider ─── */
+    const sliderTrack = document.getElementById('sliderTrack');
+    const slides = sliderTrack.querySelectorAll('.slide');
+    const dotsContainer = document.getElementById('sliderDots');
+    let currentSlide = 0;
+
+    // Create dots
+    slides.forEach((_, i) => {
+      const dot = document.createElement('button');
+      dot.classList.add('dot');
+      if (i === 0) dot.classList.add('active');
+      dot.addEventListener('click', () => goToSlide(i));
+      dotsContainer.appendChild(dot);
+    });
+
+    function goToSlide(index) {
+      currentSlide = index;
+      sliderTrack.style.transform = `translateX(-${index * 100}%)`;
+      document.querySelectorAll('.slider-dots .dot').forEach((d, i) => {
+        d.classList.toggle('active', i === index);
+      });
+    }
+
+    document.getElementById('prevBtn').addEventListener('click', (e) => {
+      e.stopPropagation();
+      goToSlide(currentSlide <= 0 ? slides.length - 1 : currentSlide - 1);
+    });
+
+    document.getElementById('nextBtn').addEventListener('click', (e) => {
+      e.stopPropagation();
+      goToSlide(currentSlide >= slides.length - 1 ? 0 : currentSlide + 1);
+    });
+
+    // Touch/swipe support for slider
+    let touchStartX = 0;
+    let touchEndX = 0;
+    const sliderWrapper = document.querySelector('.slider-wrapper');
+
+    sliderWrapper.addEventListener('touchstart', (e) => {
+      touchStartX = e.changedTouches[0].screenX;
+    }, { passive: true });
+
+    sliderWrapper.addEventListener('touchend', (e) => {
+      touchEndX = e.changedTouches[0].screenX;
+      const diff = touchStartX - touchEndX;
+      if (Math.abs(diff) > 40) {
+        if (diff > 0) {
+          goToSlide(currentSlide >= slides.length - 1 ? 0 : currentSlide + 1);
+        } else {
+          goToSlide(currentSlide <= 0 ? slides.length - 1 : currentSlide - 1);
+        }
+      }
+    }, { passive: true });
+  </script>
+</body>
+</html>
