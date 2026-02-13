@@ -681,6 +681,13 @@ Sonsuza dek seninle…
       setTimeout(launchFallingHearts, 800);
     });
 
+    // Mobilde touchend ile de müziği tetikle
+    envelopeWrapper.addEventListener('touchend', () => {
+      if (isOpen && !musicPlaying) {
+        startMusic();
+      }
+    }, { passive: true });
+
     /* ─── Close / Reset ─── */
     function closeLetter() {
       letterFull.classList.remove('visible');
@@ -842,7 +849,24 @@ Sonsuza dek seninle…
     const musicPlaylist = ['Bana Ellerini Ver.mp3', 'Tencere Kapak.mp3'];
     let musicCurrentTrack = 0;
     let musicPlaying = false;
-    const musicAudio = new Audio(musicPlaylist[musicCurrentTrack]);
+    let musicUnlocked = false;
+    const musicAudio = new Audio();
+    musicAudio.preload = 'auto';
+    musicAudio.src = musicPlaylist[musicCurrentTrack];
+
+    // Mobilde ses kilidini aç (ilk dokunuşta sessiz play/pause yaparak)
+    function unlockAudio() {
+      if (musicUnlocked) return;
+      musicAudio.muted = true;
+      musicAudio.play().then(() => {
+        musicAudio.pause();
+        musicAudio.muted = false;
+        musicAudio.currentTime = 0;
+        musicUnlocked = true;
+      }).catch(() => {});
+    }
+    document.addEventListener('touchstart', unlockAudio, { once: true });
+    document.addEventListener('click', unlockAudio, { once: true });
 
     // Şarkı bitince sıradakine geç
     musicAudio.addEventListener('ended', () => {
@@ -853,10 +877,15 @@ Sonsuza dek seninle…
 
     function startMusic() {
       if (!musicPlaying) {
-        musicAudio.play().catch(() => {});
-        musicBtn.textContent = '🎵';
-        musicBtn.classList.add('playing');
-        musicPlaying = true;
+        musicAudio.play().then(() => {
+          musicBtn.textContent = '🎵';
+          musicBtn.classList.add('playing');
+          musicPlaying = true;
+        }).catch(() => {
+          // Tarayıcı engellerse butonu göster, kullanıcı elle açsın
+          musicBtn.textContent = '🎵';
+          musicBtn.style.animation = 'musicPulse 0.5s ease-in-out 3';
+        });
       }
     }
 
