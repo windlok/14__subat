@@ -964,6 +964,7 @@ Sonsuza dek seninle…
     musicAudio.preload = 'auto';
     musicAudio.volume = 1.0;
     musicAudio.setAttribute('playsinline', '');
+    musicAudio.autoplay = true;
     musicAudio.src = musicPlaylist[musicCurrentTrack];
 
     // Şarkı bitince sıradakine geç
@@ -986,7 +987,6 @@ Sonsuza dek seninle…
           musicBtn.textContent = '🎵';
           musicBtn.classList.add('playing');
         }).catch(() => {
-          // Hata durumunda src'yi tekrar yükle
           musicAudio.load();
           musicAudio.play().then(() => {
             musicPlaying = true;
@@ -997,14 +997,21 @@ Sonsuza dek seninle…
       }
     }
 
-    // Buton tıklama (click + touchend hem masaüstü hem mobil için)
+    // Buton tıklama
     musicBtn.addEventListener('click', (e) => {
       e.preventDefault();
       e.stopPropagation();
       toggleMusic();
     });
 
-    // İlk sayfa etkileşiminde otomatik başlat (mobil için kritik)
+    // Sayfa yüklenince direkt başlat (masaüstü için çalışır)
+    musicAudio.play().then(() => {
+      musicPlaying = true;
+      musicBtn.textContent = '🎵';
+      musicBtn.classList.add('playing');
+    }).catch(() => {});
+
+    // Mobil: İlk dokunuşta başlat (tarayıcı engeli aşmak için)
     function autoStartMusic() {
       if (!musicPlaying) {
         musicAudio.play().then(() => {
