@@ -433,6 +433,48 @@
       100% { transform: translateY(110vh) rotate(45deg) scale(0.6); opacity: 0; }
     }
 
+    /* ─── Havai fişek efekti ─── */
+    .firework {
+      position: absolute;
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      animation: fireworkExplode 1.2s ease-out forwards;
+    }
+    @keyframes fireworkExplode {
+      0%   { transform: translate(0, 0) scale(1); opacity: 1; }
+      100% { transform: translate(var(--fx), var(--fy)) scale(0); opacity: 0; }
+    }
+    .firework-trail {
+      position: absolute;
+      width: 3px;
+      height: 3px;
+      border-radius: 50%;
+      background: #fdcb6e;
+      animation: fireworkRise ease-out forwards;
+    }
+    @keyframes fireworkRise {
+      0%   { transform: translateY(0); opacity: 1; }
+      100% { transform: translateY(var(--rise)); opacity: 0; }
+    }
+
+    /* ─── Gül yaprağı yağmuru ─── */
+    .petal {
+      position: fixed;
+      top: -40px;
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.7;
+      animation: petalFall linear infinite;
+    }
+    @keyframes petalFall {
+      0%   { transform: translateY(0) translateX(0) rotate(0deg) scale(1); opacity: 0.8; }
+      25%  { transform: translateY(25vh) translateX(30px) rotate(90deg); opacity: 0.7; }
+      50%  { transform: translateY(50vh) translateX(-20px) rotate(180deg); opacity: 0.6; }
+      75%  { transform: translateY(75vh) translateX(25px) rotate(270deg); opacity: 0.4; }
+      100% { transform: translateY(110vh) translateX(-10px) rotate(360deg) scale(0.6); opacity: 0; }
+    }
+
     /* ─── Responsive ─── */
     @media (max-width: 480px) {
       .letter-card { padding: 28px 18px; }
@@ -673,6 +715,7 @@ Sonsuza dek seninle…
       // Launch effects
       setTimeout(launchConfetti, 600);
       setTimeout(launchFallingHearts, 800);
+      setTimeout(launchFireworks, 400);
     });
 
     /* ─── Close / Reset ─── */
@@ -829,6 +872,79 @@ Sonsuza dek seninle…
       }
       update();
       setInterval(update, 1000);
+    })();
+
+    /* ─── Havai Fişek ─── */
+    function launchFireworks() {
+      const container = document.getElementById('confettiContainer');
+      const colors = ['#e84393', '#fd79a8', '#fdcb6e', '#ff6b6b', '#ff9ff3', '#6c5ce7', '#00cec9', '#fab1a0', '#fff'];
+
+      function singleFirework() {
+        const x = Math.random() * window.innerWidth;
+        const riseHeight = -(150 + Math.random() * 250);
+
+        // Yükselen iz
+        const trail = document.createElement('div');
+        trail.className = 'firework-trail';
+        trail.style.left = x + 'px';
+        trail.style.bottom = '0px';
+        trail.style.setProperty('--rise', riseHeight + 'px');
+        trail.style.animationDuration = '0.6s';
+        container.appendChild(trail);
+        setTimeout(() => trail.remove(), 600);
+
+        // Patlama
+        setTimeout(() => {
+          const burstY = window.innerHeight + riseHeight;
+          const particleCount = 30 + Math.floor(Math.random() * 20);
+          for (let i = 0; i < particleCount; i++) {
+            const particle = document.createElement('div');
+            particle.className = 'firework';
+            const angle = (Math.PI * 2 * i) / particleCount;
+            const distance = 60 + Math.random() * 100;
+            const fx = Math.cos(angle) * distance;
+            const fy = Math.sin(angle) * distance;
+            particle.style.left = x + 'px';
+            particle.style.top = burstY + 'px';
+            particle.style.background = colors[Math.floor(Math.random() * colors.length)];
+            particle.style.width = (3 + Math.random() * 4) + 'px';
+            particle.style.height = particle.style.width;
+            particle.style.boxShadow = `0 0 6px ${particle.style.background}`;
+            particle.style.setProperty('--fx', fx + 'px');
+            particle.style.setProperty('--fy', fy + 'px');
+            particle.style.animationDuration = (0.8 + Math.random() * 0.6) + 's';
+            container.appendChild(particle);
+            setTimeout(() => particle.remove(), 2000);
+          }
+        }, 550);
+      }
+
+      // 6 havai fişek farklı zamanlamayla
+      for (let i = 0; i < 6; i++) {
+        setTimeout(singleFirework, i * 500 + Math.random() * 300);
+      }
+    }
+
+    /* ─── Gül Yaprağı Yağmuru ─── */
+    (function initPetals() {
+      const petals = ['🌸', '🌹', '🌺', '🌷', '🌻', '🌼'];
+      function createPetal() {
+        const petal = document.createElement('span');
+        petal.className = 'petal';
+        petal.textContent = petals[Math.floor(Math.random() * petals.length)];
+        petal.style.left = Math.random() * 100 + '%';
+        petal.style.fontSize = (0.8 + Math.random() * 1) + 'rem';
+        petal.style.animationDuration = (6 + Math.random() * 8) + 's';
+        petal.style.opacity = 0.3 + Math.random() * 0.4;
+        document.body.appendChild(petal);
+        setTimeout(() => petal.remove(), 15000);
+      }
+      // Başlangıçta birkaç yaprak
+      for (let i = 0; i < 8; i++) {
+        setTimeout(createPetal, Math.random() * 3000);
+      }
+      // Sürekli yaprak üret
+      setInterval(createPetal, 2000);
     })();
 
     /* ─── Müzik Çalar (Playlist - Otomatik) ─── */
