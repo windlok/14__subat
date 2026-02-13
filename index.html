@@ -597,6 +597,9 @@
 </head>
 <body>
 
+  <!-- Müzik butonu -->
+  <button class="music-btn" id="musicBtn" aria-label="Müzik">🔇</button>
+
   <!-- Birlikte geçen süre -->
   <div class="timer-container">
     <div class="timer-label">💕 İyiki Seninle</div>
@@ -950,11 +953,17 @@ Sonsuza dek seninle…
       setInterval(createPetal, 2000);
     })();
 
-    /* ─── Müzik Çalar (Playlist - Otomatik) ─── */
+    /* ─── Müzik Çalar (Playlist - Mobil Uyumlu) ─── */
     const musicPlaylist = ['Bana Ellerini Ver.mp3', 'Tencere Kapak.mp3'];
     let musicCurrentTrack = 0;
+    let musicPlaying = false;
     const musicAudio = new Audio();
+    const musicBtn = document.getElementById('musicBtn');
+
+    // Ses ayarları
     musicAudio.preload = 'auto';
+    musicAudio.volume = 1.0;
+    musicAudio.setAttribute('playsinline', '');
     musicAudio.src = musicPlaylist[musicCurrentTrack];
 
     // Şarkı bitince sıradakine geç
@@ -964,16 +973,61 @@ Sonsuza dek seninle…
       musicAudio.play().catch(() => {});
     });
 
-    // Sayfa yüklenince çalmayı dene
-    musicAudio.play().catch(() => {
-      // Tarayıcı engellerse ilk dokunma/tıklamada başlat
-      function startOnInteraction() {
-        musicAudio.play().catch(() => {});
-        document.removeEventListener('click', startOnInteraction);
-        document.removeEventListener('touchstart', startOnInteraction);
+    // Müziği başlat/durdur fonksiyonu
+    function toggleMusic() {
+      if (musicPlaying) {
+        musicAudio.pause();
+        musicPlaying = false;
+        musicBtn.textContent = '🔇';
+        musicBtn.classList.remove('playing');
+      } else {
+        musicAudio.play().then(() => {
+          musicPlaying = true;
+          musicBtn.textContent = '🎵';
+          musicBtn.classList.add('playing');
+        }).catch(() => {
+          // Hata durumunda src'yi tekrar yükle
+          musicAudio.load();
+          musicAudio.play().then(() => {
+            musicPlaying = true;
+            musicBtn.textContent = '🎵';
+            musicBtn.classList.add('playing');
+          }).catch(() => {});
+        });
       }
-      document.addEventListener('click', startOnInteraction, { once: false });
-      document.addEventListener('touchstart', startOnInteraction, { once: false });
+    }
+
+    // Buton tıklama (click + touchend hem masaüstü hem mobil için)
+    musicBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      toggleMusic();
+    });
+
+    // İlk sayfa etkileşiminde otomatik başlat (mobil için kritik)
+    function autoStartMusic() {
+      if (!musicPlaying) {
+        musicAudio.play().then(() => {
+          musicPlaying = true;
+          musicBtn.textContent = '🎵';
+          musicBtn.classList.add('playing');
+        }).catch(() => {});
+      }
+      document.removeEventListener('touchstart', autoStartMusic);
+      document.removeEventListener('touchend', autoStartMusic);
+      document.removeEventListener('click', autoStartMusic);
+    }
+    document.addEventListener('touchstart', autoStartMusic, { passive: true });
+    document.addEventListener('touchend', autoStartMusic, { passive: true });
+    document.addEventListener('click', autoStartMusic);
+
+    // Sayfa görünürlüğü değişince (sekme değişimi)
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden && musicPlaying) {
+        musicAudio.pause();
+      } else if (!document.hidden && musicPlaying) {
+        musicAudio.play().catch(() => {});
+      }
     });
 
     /* ─── Typewriter Efekti ─── */
